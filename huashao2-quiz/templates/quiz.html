@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答题中 - 花儿与少年 2</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container quiz-container">
+        <header class="quiz-header">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text">房车行驶中 <span id="currentNum">1</span>/10</div>
+        </header>
+
+        <main class="quiz-main">
+            <form id="quizForm">
+                <div class="question-card" id="questionCard">
+                    <div class="scene-tag" id="sceneTag">场景标签</div>
+                    <h2 class="question-text" id="questionText">题目加载中...</h2>
+                    
+                    <div class="options-list" id="optionsList">
+                        <!-- 选项将通过 JS 动态加载 -->
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const questions = {{ questions | tojson }};
+        let currentQuestionIndex = 0;
+        let answers = [];
+
+        function renderQuestion(index) {
+            const question = questions[index];
+            document.getElementById('sceneTag').textContent = question.scene;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentNum').textContent = index + 1;
+            
+            // 更新进度条
+            const progress = ((index + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            const optionsList = document.getElementById('optionsList');
+            optionsList.innerHTML = '';
+
+            question.options.forEach((option, optIndex) => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'option-btn';
+                optionBtn.textContent = option.text;
+                optionBtn.onclick = () => selectOption(option.char);
+                optionsList.appendChild(optionBtn);
+            });
+        }
+
+        function selectOption(character) {
+            // 保存答案
+            answers.push({
+                question_id: questions[currentQuestionIndex].id,
+                character: character
+            });
+
+            // 移动到下一题或提交
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion(currentQuestionIndex);
+            } else {
+                submitQuiz();
+            }
+        }
+
+        async function submitQuiz() {
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ answers })
+                });
+
+                const result = await response.json();
+                window.location.href = '/result/' + result.id;
+            } catch (error) {
+                console.error('提交失败:', error);
+                alert('提交失败，请重试');
+            }
+        }
+
+        // 初始化第一题
+        renderQuestion(currentQuestionIndex);
+    </script>
+</body>
+</html>
