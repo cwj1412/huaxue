@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ character.name }} - 测试结果</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .result-container {
+            border-color: {{ character.color }};
+            background: linear-gradient(135deg, {{ character.color }}22 0%, transparent 100%);
+        }
+        .character-name {
+            color: {{ character.color }};
+        }
+    </style>
+</head>
+<body>
+    <div class="container result-page">
+        <div class="result-card result-container">
+            <div class="result-header">
+                <span class="result-emoji">🎉</span>
+                <h1 class="character-name">{{ character.name }}</h1>
+                <h2 class="character-title">{{ character.title }}</h2>
+            </div>
+
+            <div class="quote-box">
+                <p class="quote-text">"{{ character.quote }}"</p>
+            </div>
+
+            <div class="keywords-section">
+                {% for keyword in character.keywords %}
+                <span class="keyword-tag">{{ keyword }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="description-section">
+                <p>{{ character.description }}</p>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn primary" onclick="shareResult()">
+                    📤 分享我的结果
+                </button>
+                <a href="/quiz" class="action-btn secondary">
+                    🔄 再测一次
+                </a>
+                <a href="/" class="action-btn tertiary">
+                    🏠 返回首页
+                </a>
+            </div>
+
+            <div class="share-hint" id="shareHint" style="display: none;">
+                截图分享给朋友，看看他们是什么角色！
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const character = {{ character | tojson }};
+
+        function shareResult() {
+            const text = `我测出来是《花儿与少年 2》里的【${character.name}】！\\n${character.quote}\\n\\n快来测测你是节目里的谁？`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '花儿与少年 2 性格测试',
+                    text: text,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // 复制到剪贴板
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('结果已复制到剪贴板！');
+                }).catch(() => {
+                    document.getElementById('shareHint').style.display = 'block';
+                });
+            }
+        }
+    </script>
+</body>
+</html>
